@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Double Transposition Lab · Encrypt, Decrypt &amp; Break</title>
+  <meta name="description"
+    content="Interactive classical-cryptography lab: encrypt, decrypt and brute-force a Double Transposition cipher right in the browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #faf3e8;
+      --surface: #fffaf2;
+      --text: #2b1d14;
+      --muted: #7a6554;
+      --line: #ead9c3;
+      --accent: #c4561f;
+      --accent-ink: #fff8ef;
+      --blue: #9a3412;
+      --code: #f4e8d6;
+      --warn: #b45309;
+      --glow: rgba(196, 86, 31, .16);
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      color-scheme: light
+    }
+
+    @media (prefers-color-scheme:dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #17110d;
+        --surface: #211812;
+        --text: #f5e9db;
+        --muted: #b09a85;
+        --line: #35281e;
+        --accent: #f59e4b;
+        --accent-ink: #1d1208;
+        --blue: #fdba74;
+        --code: #120d09;
+        --warn: #fbbf24;
+        --glow: rgba(245, 158, 75, .18);
+        color-scheme: dark
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #17110d;
+      --surface: #211812;
+      --text: #f5e9db;
+      --muted: #b09a85;
+      --line: #35281e;
+      --accent: #f59e4b;
+      --accent-ink: #1d1208;
+      --blue: #fdba74;
+      --code: #120d09;
+      --warn: #fbbf24;
+      --glow: rgba(245, 158, 75, .18);
+      color-scheme: dark
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+      scroll-behavior: smooth
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: inherit
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased
+    }
+
+    .mono,
+    code,
+    .grid,
+    textarea.mono,
+    input.mono {
+      font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 20px
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0
+    }
+
+    .brand {
+      font-weight: 700;
+      display: flex;
+      gap: 10px;
+      align-items: center
+    }
+
+    .brand i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 14px var(--accent);
+      display: inline-block
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 14px
+    }
+
+    nav a:hover {
+      color: var(--text)
+    }
+
+    .hero {
+      padding: 56px 0 40px;
+      text-align: center;
+      background: radial-gradient(600px 240px at 50% 0, var(--glow), transparent)
+    }
+
+    .pill {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--line);
+      padding: 5px 12px;
+      border-radius: 99px;
+      background: var(--surface)
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 56px);
+      line-height: 1.1;
+      margin: 18px 0 14px;
+      font-weight: 800;
+      letter-spacing: -.02em
+    }
+
+    h1 span {
+      color: var(--accent)
+    }
+
+    .lead {
+      max-width: 680px;
+      margin: 0 auto 24px;
+      color: var(--muted);
+      font-size: 18px
+    }
+
+    .tags {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap
+    }
+
+    .tags b {
+      font: 500 12px "JetBrains Mono", monospace;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--code);
+      border: 1px solid var(--line);
+      color: var(--muted)
+    }
+
+    section {
+      padding: 44px 0
+    }
+
+    h2 {
+      font-size: 28px;
+      margin: 0 0 8px;
+      letter-spacing: -.01em
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 24px
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px
+    }
+
+    .tab {
+      font: 600 14px Inter, sans-serif;
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent)
+    }
+
+    .panel[hidden] {
+      display: none
+    }
+
+    .row {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      margin-bottom: 14px
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      font: 15px Inter, sans-serif;
+      color: var(--text);
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px
+    }
+
+    .btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px
+    }
+
+    button.go {
+      font: 700 15px Inter, sans-serif;
+      background: var(--accent);
+      color: var(--accent-ink);
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 20px;
+      cursor: pointer
+    }
+
+    button.ghost {
+      font: 600 14px Inter, sans-serif;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: wait
+    }
+
+    .out {
+      margin-top: 20px
+    }
+
+    .err {
+      color: var(--warn);
+      font-size: 14px;
+      margin-top: 12px
+    }
+
+    .result {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 18px;
+      word-break: break-all
+    }
+
+    .lbl {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin: 0 0 6px
+    }
+
+    .grids {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      margin-top: 18px
+    }
+
+    .gt {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px
+    }
+
+    .grid {
+      display: grid;
+      gap: 3px
+    }
+
+    .grid span {
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      font-size: 13px;
+      min-width: 0
+    }
+
+    .grid span.u {
+      color: var(--muted);
+      opacity: .5
+    }
+
+    .bar {
+      height: 6px;
+      background: var(--line);
+      border-radius: 9px;
+      overflow: hidden;
+      margin: 16px 0 6px
+    }
+
+    .bar div {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width .1s
+    }
+
+    .stats {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      margin: 14px 0
+    }
+
+    .stat {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px
+    }
+
+    .stat b {
+      display: block;
+      font-size: 22px;
+      font-weight: 700
+    }
+
+    .stat span {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .log {
+      font-size: 12.5px;
+      color: var(--muted);
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      max-height: 150px;
+      overflow: auto;
+      margin-top: 12px
+    }
+
+    .log .k {
+      color: var(--accent)
+    }
+
+    .log .s {
+      color: var(--warn)
+    }
+
+    .hit {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      background: var(--surface)
+    }
+
+    .hit.best {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow)
+    }
+
+    .hit .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-bottom: 6px
+    }
+
+    .badge {
+      font-weight: 700;
+      color: var(--accent-ink);
+      background: var(--accent);
+      border-radius: 6px;
+      padding: 1px 8px
+    }
+
+    .hit .t {
+      font-size: 16px;
+      word-break: break-word
+    }
+
+    .steps {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))
+    }
+
+    .step b.n {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: var(--glow);
+      color: var(--accent);
+      font-weight: 800;
+      margin-bottom: 10px
+    }
+
+    .step h3 {
+      margin: 0 0 6px;
+      font-size: 17px
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px
+    }
+
+    .scroll {
+      overflow-x: auto
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    .two {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))
+    }
+
+    ul.l {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted)
+    }
+
+    ul.l li {
+      margin: 6px 0
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 28px 0 40px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: Fraunces, Georgia, "Times New Roman", serif
+    }
+
+    h1 {
+      font-weight: 800
+    }
+
+    h2 {
+      font-size: 32px
+    }
+
+    .hero {
+      background: radial-gradient(700px 320px at 50% -40px, var(--glow), transparent), radial-gradient(400px 200px at 90% 30%, var(--glow), transparent)
+    }
+
+    .card {
+      box-shadow: 0 1px 0 var(--line), 0 12px 30px -18px rgba(90, 50, 20, .35);
+      border-radius: 20px
+    }
+
+    .tab {
+      border-radius: 99px
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      color: var(--text)
+    }
+
+    button.go {
+      border-radius: 99px;
+      box-shadow: 0 8px 18px -8px var(--accent)
+    }
+
+    button.go:hover {
+      filter: brightness(1.07)
+    }
+
+    button.ghost {
+      border-radius: 99px
+    }
+
+    .hero-card {
+      width: max-content;
+      max-width: 100%;
+      margin: 30px auto 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px 18px;
+      box-shadow: 0 20px 40px -24px rgba(90, 50, 20, .45)
+    }
+
+    .hc-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px
+    }
+
+    .hc-top b {
+      color: var(--accent)
+    }
+
+    .hg {
+      display: grid;
+      grid-template-columns: repeat(6, 34px);
+      gap: 5px
+    }
+
+    .hg span {
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--code);
+      border: 1px solid var(--line);
+      font: 600 15px "JetBrains Mono", monospace;
+      transition: transform .6s, opacity .3s, background .4s
+    }
+
+    .hg.flip span {
+      background: var(--glow);
+      color: var(--accent)
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      .hg span {
+        transition: none
+      }
+    }
+
+    .grid span {
+      border-radius: 7px
+    }
+
+    .bar div {
+      background: linear-gradient(90deg, var(--accent), var(--blue))
+    }
+
+    .hit.best {
+      box-shadow: 0 0 0 3px var(--glow)
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="brand"><i></i>DT·Lab</div>
+      <div><a href="#lab">Lab</a><a href="#how">How it works</a><a href="#about">About</a></div>
+    </nav>
+
+    <header class="hero">
+      <span class="pill">Classical Cryptography Project</span>
+      <h1>Double Transposition <span>Lab</span></h1>
+      <p class="lead">Encrypt, decrypt and brute-force a row-and-column transposition cipher. A Java cryptanalysis
+        project with a built-in web interface: every result on this page is computed by the Java code.</p>
+      <div class="tags"><b>Cryptography</b><b>Cryptanalysis</b><b>Brute Force</b><b>Java</b><b>Built-in HTTP Server</b>
+      </div>
+      <div class="hero-card" aria-hidden="true">
+        <div class="hc-top"><span id="hc-l">Plaintext</span><b>4 × 6 grid</b></div>
+        <div class="hg" id="hg"></div>
+      </div>
+    </header>
+
+    <section id="lab">
+      <h2>Try it live</h2>
+      <p class="sub">Pick a mode. Use “Load example” to fill in a ready-made case.</p>
+      <div class="card err" id="offline" hidden style="margin-bottom:16px">This page needs the Java server. Open a
+        terminal in the project folder and run <code>java DoubleTransposition web</code>, then visit
+        <code>http://localhost:8080</code>.</div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-t="enc">Encrypt</button>
+        <button class="tab" role="tab" aria-selected="false" data-t="dec">Decrypt</button>
+        <button class="tab" role="tab" aria-selected="false" data-t="known">Attack · known size</button>
+        <button class="tab" role="tab" aria-selected="false" data-t="unk">Attack · unknown size</button>
+        <button class="tab" role="tab" aria-selected="false" data-t="sec">Security analysis</button>
+      </div>
+      <div class="card">
+        <div class="panel" id="p-enc">
+          <label for="e-pt">Plaintext</label><textarea id="e-pt" rows="2"
+            placeholder="meet at the bridge night"></textarea>
+          <div class="row" style="margin-top:14px">
+            <div><label for="e-r">Rows</label><input id="e-r" type="number" min="1" max="9" value="4"></div>
+            <div><label for="e-c">Columns</label><input id="e-c" type="number" min="1" max="9" value="6"></div>
+            <div><label for="e-rk">Row key</label><input class="mono" id="e-rk" value="3142"></div>
+            <div><label for="e-ck">Column key</label><input class="mono" id="e-ck" value="415263"></div>
+          </div>
+          <div class="btns"><button class="go" id="e-go">Encrypt</button><button class="ghost" id="e-ex">Load
+              example</button></div>
+          <div class="err" id="e-err"></div>
+          <div class="out" id="e-out"></div>
+        </div>
+
+        <div class="panel" id="p-dec" hidden>
+          <label for="d-ct">Ciphertext</label><textarea class="mono" id="d-ct" rows="2"></textarea>
+          <div class="row" style="margin-top:14px">
+            <div><label for="d-r">Rows</label><input id="d-r" type="number" min="1" max="9" value="4"></div>
+            <div><label for="d-c">Columns</label><input id="d-c" type="number" min="1" max="9" value="6"></div>
+            <div><label for="d-rk">Row key</label><input class="mono" id="d-rk" value="3142"></div>
+            <div><label for="d-ck">Column key</label><input class="mono" id="d-ck" value="415263"></div>
+          </div>
+          <div class="btns"><button class="go" id="d-go">Decrypt</button><button class="ghost" id="d-ex">Load
+              example</button></div>
+          <div class="err" id="d-err"></div>
+          <div class="out" id="d-out"></div>
+        </div>
+
+        <div class="panel" id="p-known" hidden>
+          <label for="k-ct">Ciphertext to break</label><textarea class="mono" id="k-ct" rows="2"></textarea>
+          <div class="row" style="margin-top:14px">
+            <div><label for="k-r">Rows</label><input id="k-r" type="number" min="1" max="9" value="4"></div>
+            <div><label for="k-c">Columns</label><input id="k-c" type="number" min="1" max="9" value="6"></div>
+          </div>
+          <div class="btns"><button class="go" id="k-go">Start attack</button><button class="ghost" id="k-ex">Load
+              example</button></div>
+          <div class="err" id="k-err"></div>
+          <div class="out" id="k-out"></div>
+        </div>
+
+        <div class="panel" id="p-unk" hidden>
+          <label for="u-ct">Ciphertext to break</label><textarea class="mono" id="u-ct" rows="2"></textarea>
+          <p class="sub" style="margin:10px 0 14px">The grid size is unknown, so every factor pair of the text length is
+            tested.</p>
+          <div class="btns"><button class="go" id="u-go">Start attack</button><button class="ghost" id="u-ex">Load
+              example</button></div>
+          <div class="err" id="u-err"></div>
+          <div class="out" id="u-out"></div>
+        </div>
+
+        <div class="panel" id="p-sec" hidden>
+          <p class="sub" style="margin:0 0 14px">How strong is this cipher? Pick a grid size and Java measures the key
+            space and the time needed to break it.</p>
+          <div class="row">
+            <div><label for="s-r">Rows</label><input id="s-r" type="number" min="1" max="9" value="6"></div>
+            <div><label for="s-c">Columns</label><input id="s-c" type="number" min="1" max="9" value="6"></div>
+          </div>
+          <div class="btns"><button class="go" id="s-go">Analyze</button></div>
+          <div class="err" id="s-err"></div>
+          <div class="out" id="s-out"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <h2>How it works</h2>
+      <p class="sub">The text is written into a grid, then rows and columns are shuffled by two secret keys.</p>
+      <div class="steps">
+        <div class="card step"><b class="n">1</b>
+          <h3>Fill the grid</h3>
+          <p>The message is written row by row into an R × C grid. Short messages are padded with underscores.</p>
+        </div>
+        <div class="card step"><b class="n">2</b>
+          <h3>Permute rows, then columns</h3>
+          <p>The row key reorders the rows and the column key reorders the columns. The result is read out row by row.
+          </p>
+        </div>
+        <div class="card step"><b class="n">3</b>
+          <h3>Break it by search</h3>
+          <p>The attack tries every row and column permutation, scores each candidate by how many English words it
+            contains, and ranks the results.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why brute force has limits</h2>
+      <p class="sub">The key space is R! × C!, which grows explosively with the grid size.</p>
+      <div class="card scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Grid</th>
+              <th>Row keys (R!)</th>
+              <th>Column keys (C!)</th>
+              <th>Total keys</th>
+            </tr>
+          </thead>
+          <tbody id="cx"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="about">
+      <h2>About the project</h2>
+      <div class="two">
+        <div class="card">
+          <h3 style="margin-top:0">What it does</h3>
+          <ul class="l">
+            <li>Encrypts and decrypts with user-defined row and column keys</li>
+            <li>Brute-forces all key pairs when the grid size is known</li>
+            <li>Tests every valid grid size when it is unknown</li>
+            <li>Ranks candidates with a dictionary-based English score (0–100)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Engineering notes</h3>
+          <ul class="l">
+            <li>Pure Java backend (built-in HttpServer, no libraries)</li>
+            <li>Key validation with clear error messages</li>
+            <li>Multithreaded search on all CPU cores with live progress</li>
+            <li>Statistical scoring: real-word coverage plus English letter-pair analysis</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer>Built by <b>Raghad</b> · Information Security / Cryptography course project</footer>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const F = n => { let r = 1; for (let i = 2; i <= n; i++)r *= i; return r };
+    const fmt = n => n.toLocaleString("en-US");
+    const toGrid = (t, R, C) => Array.from({ length: R }, (_, r) => [...t.slice(r * C, r * C + C)]);
+    const gridHTML = (t, R, C, title) => `<div><div class="gt">${title}</div><div class="grid" style="grid-template-columns:repeat(${C},1fr)">${toGrid(t, R, C).flat().map(ch => `<span class="${ch === "_" ? "u" : ""}">${ch === "_" ? "·" : esc(ch)}</span>`).join("")}</div></div>`;
+    const EX = { pt: "meet at the bridge night", R: 4, C: 6, rk: "3142", ck: "415263" };
+
+    if (location.protocol === "file:") $("#offline").hidden = false;
+
+    async function api(path, data) {
+      let r; try { r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(data) }) }
+      catch (e) { throw new Error("Cannot reach the Java server. Start it with: java DoubleTransposition web") }
+      const j = await r.json(); if (!r.ok) throw new Error(j.error || "Server error"); return j
+    }
+    const guard = async (errEl, btn, fn) => { $(errEl).textContent = ""; btn.disabled = true; try { await fn() } catch (e) { $(errEl).textContent = e.message } finally { btn.disabled = false } };
+    const copyBtn = t => `<button class="ghost" style="margin-top:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText(${JSON.stringify(t).replace(/"/g, "&quot;")});this.textContent='Copied'">Copy</button>`;
+    const exCT = async () => (await api("/api/encrypt", { plaintext: EX.pt, rows: EX.R, cols: EX.C, rowKey: EX.rk, colKey: EX.ck })).result;
+
+    document.querySelectorAll(".tab").forEach(b => b.onclick = () => { document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === b)); document.querySelectorAll(".panel").forEach(p => p.hidden = p.id !== "p-" + b.dataset.t) });
+
+    $("#e-ex").onclick = () => { $("#e-pt").value = EX.pt; $("#e-r").value = EX.R; $("#e-c").value = EX.C; $("#e-rk").value = EX.rk; $("#e-ck").value = EX.ck; $("#e-go").click() };
+    $("#e-go").onclick = e => guard("#e-err", e.target, async () => {
+      const R = +$("#e-r").value, C = +$("#e-c").value;
+      const j = await api("/api/encrypt", { plaintext: $("#e-pt").value, rows: R, cols: C, rowKey: $("#e-rk").value, colKey: $("#e-ck").value });
+      $("#e-out").innerHTML = `<p class="lbl">Ciphertext</p><div class="result mono">${esc(j.result)}</div>${copyBtn(j.result)}${j.truncated ? `<div class="err">Text was longer than ${R * C} characters and was truncated.</div>` : ""}
+ <div class="grids">${gridHTML(j.fill, R, C, "1 · Fill rows")}${gridHTML(j.afterRows, R, C, "2 · Permute rows")}${gridHTML(j.afterCols, R, C, "3 · Permute columns")}</div>`
+    });
+
+    $("#d-ex").onclick = e => guard("#d-err", e.target, async () => { $("#d-ct").value = await exCT(); $("#d-r").value = EX.R; $("#d-c").value = EX.C; $("#d-rk").value = EX.rk; $("#d-ck").value = EX.ck });
+    $("#d-go").onclick = e => guard("#d-err", e.target, async () => {
+      const j = await api("/api/decrypt", { ciphertext: $("#d-ct").value, rows: $("#d-r").value, cols: $("#d-c").value, rowKey: $("#d-rk").value, colKey: $("#d-ck").value });
+      $("#d-out").innerHTML = `<p class="lbl">Plaintext</p><div class="result">${esc(j.result)}</div>`
+    });
+
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    function renderJob(out, j, id) {
+      const log = j.log.length ? `<div class="log mono">${j.log.map(l => `<div class="${l.status === "keep" ? "k" : "s"}">[${l.status.toUpperCase()}] ${l.rows}×${l.cols} → ${esc(l.note)}</div>`).join("")}</div>` : "";
+      const ok = j.good > 0, pct = Math.min(100, j.tested / j.total * 100), rate = j.ms ? Math.round(j.tested / j.ms * 1000) : 0;
+      $(out).innerHTML = log + `<div class="bar"><div style="width:${pct}%"></div></div>
+ <div class="sub" style="margin:0">${j.done ? (j.cancelled ? "Stopped" : "Finished") : `Searching ${esc(j.dim)} on ${j.threads} thread(s)…`} ${j.done ? "" : `<button class="ghost" style="padding:4px 12px;margin-left:8px" onclick="api('/api/cancel',{id:'${id}'})">Stop</button>`}</div>
+ <div class="stats"><div class="stat"><b>${fmt(j.tested)}</b><span>of ${fmt(j.total)} key pairs tested</span></div><div class="stat"><b>${fmt(j.good)}</b><span>readable results (score ≥ 50)</span></div><div class="stat"><b>${fmt(rate)}/s</b><span>${(j.ms / 1000).toFixed(1)}s elapsed</span></div></div>` +
+        (j.done && !ok ? `<div class="err">No readable English found. Raw top candidates are shown below.</div>` : "") +
+        j.results.slice(0, 12).map((h, i) => `<div class="hit ${i === 0 && ok ? "best" : ""}"><div class="meta"><span class="badge">${h.score}</span><span>${h.rows}×${h.cols}</span><span class="mono">rows ${h.rowKey}</span><span class="mono">cols ${h.colKey}</span>${i === 0 && ok ? "<span>best match</span>" : ""}</div><div class="t">${esc(h.text)}</div></div>`).join("")
+    }
+    async function runHack(btn, errEl, out, path, data) {
+      $(out).innerHTML = "";
+      await guard(errEl, btn, async () => {
+        const { id } = await api(path, data);
+        for (; ;) { const j = await api("/api/job", { id }); renderJob(out, j, id); if (j.done) break; await wait(350) }
+      })
+    }
+
+    $("#k-ex").onclick = e => guard("#k-err", e.target, async () => { $("#k-ct").value = await exCT(); $("#k-r").value = EX.R; $("#k-c").value = EX.C });
+    $("#k-go").onclick = e => runHack(e.target, "#k-err", "#k-out", "/api/hack", { ciphertext: $("#k-ct").value, rows: $("#k-r").value, cols: $("#k-c").value });
+    $("#u-ex").onclick = e => guard("#u-err", e.target, async () => { $("#u-ct").value = await exCT() });
+    $("#u-go").onclick = e => runHack(e.target, "#u-err", "#u-out", "/api/hack-auto", { ciphertext: $("#u-ct").value });
+
+    const human = s => s < 1e-3 ? "instantly" : s < 1 ? Math.round(s * 1000) + " ms" : s < 60 ? s.toFixed(1) + " seconds" : s < 3600 ? (s / 60).toFixed(1) + " minutes" : s < 86400 ? (s / 3600).toFixed(1) + " hours" : s < 3.15e7 ? (s / 86400).toFixed(1) + " days" : (s / 3.15e7).toExponential(1) + " years";
+    $("#s-go").onclick = e => guard("#s-err", e.target, async () => {
+      const j = await api("/api/analyze", { rows: $("#s-r").value, cols: $("#s-c").value });
+      $("#s-out").innerHTML = `<div class="stats"><div class="stat"><b>${fmt(j.total)}</b><span>possible key pairs (${j.rows}! × ${j.cols}!)</span></div><div class="stat"><b>${j.bits} bits</b><span>key entropy</span></div><div class="stat"><b>${esc(j.verdict)}</b><span>verdict</span></div><div class="stat"><b>${fmt(j.rate)}/s</b><span>measured on this machine</span></div></div>
+ <p class="lbl">Key strength vs AES-128</p><div class="bar" style="height:10px"><div style="width:${Math.max(1, j.bits / j.aesBits * 100)}%"></div></div><div class="sub" style="font-size:13px">${j.bits} bits vs ${j.aesBits} bits. Each extra bit doubles the work.</div>
+ <div class="scroll"><table><thead><tr><th>Attacker</th><th>Time to try every key</th></tr></thead><tbody>${j.scenarios.map(x => `<tr><td>${esc(x.name)}</td><td class="mono">${human(x.seconds)}</td></tr>`).join("")}</tbody></table></div>
+ <div class="log" style="margin-top:14px">Transposition only rearranges letters, so letter frequencies stay unchanged. Statistical attacks (word and letter-pair analysis) can break it much faster than the key space suggests.</div>`});
+
+    const HP = "meet at the bridge night", HC = "dbgreitm eaeg hntihte  t"; let hf = false;
+    const hgEl = $("#hg"); const drawHero = () => { hgEl.innerHTML = [...(hf ? HC : HP)].map(c => `<span>${c === " " ? "·" : c}</span>`).join(""); hgEl.classList.toggle("flip", hf); $("#hc-l").textContent = hf ? "Ciphertext" : "Plaintext" };
+    drawHero(); setInterval(() => { hf = !hf; drawHero() }, 2600);
+    $("#cx").innerHTML = [[3, 4], [4, 6], [5, 6], [6, 6], [7, 6], [7, 7], [8, 8], [9, 9]].map(([r, c]) => `<tr><td>${r} × ${c}</td><td class="mono">${fmt(F(r))}</td><td class="mono">${fmt(F(c))}</td><td class="mono"><b>${fmt(F(r) * F(c))}</b></td></tr>`).join("");
+  </script>
+</body>
+
+</html>
